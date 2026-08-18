@@ -7,26 +7,41 @@ TOKEN = "8824078270:AAHVz-hAPVmaiM9kuJS9-UP4M1xF6fkDSto"
 CHAT_ID = "@foladnamad"
 
 def fetch_steel_prices():
-    url = "https://ahanonline.com/product-category/%d9%85%db%8c%d9%84%da%af%d8%b1%d8%af/"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    # تنظیمات پیشرفته برای دور زدن سیستم ضد ربات سایت
+    url = "https://ahanonline.com/product-category/میلگرد/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://www.google.com/",
+        "Accept-Language": "fa-IR,fa;q=0.9,en-US;q=0.8,en;q=0.7"
+    }
+    
     try:
-        res = requests.get(url, headers=headers, timeout=15)
+        res = requests.get(url, headers=headers, timeout=20)
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, 'html.parser')
             items = []
-            rows = soup.find_all('tr', limit=8)
+            # جستجوی مستقیم در سطرها
+            rows = soup.find_all('tr')
+            
             for row in rows:
-                cols = row.find_all(['td', 'th'])
-                text_cols = [c.get_text(strip=True) for c in cols if c.get_text(strip=True)]
-                if len(text_cols) >= 3:
-                    items.append(f"🔹 {' | '.join(text_cols[:3])}")
+                cols = row.find_all('td')
+                if len(cols) >= 2:
+                    name = cols[0].get_text(strip=True)
+                    price = cols[1].get_text(strip=True)
+                    if name and price:
+                        items.append(f"▫️ {name} | {price}")
+            
             if items:
-                table_text = "\n".join(items[:6])
-                return f"📊 **جدول قیمت روز میلگرد - فولاد نماد**\n\n{table_text}\n\n📞 جهت ثبت سفارش و استعلام لحظه‌ای با ما در ارتباط باشید."
-            return "📊 **به‌روزرسانی قیمت‌های روز بازار فولاد**\nاطلاعات جدید در حال بارگذاری است."
+                # فقط ۸ مورد اول را برمی‌داریم که متن خیلی طولانی نشود
+                table_text = "\n".join(items[:8])
+                return f"📊 **قیمت‌های لحظه‌ای میلگرد (آهن آنلاین)**\n\n{table_text}\n\n📞 استعلام لحظه‌ای با ما در ارتباط باشید."
+            
+            return "⚠️ سایت پاسخ داد اما جدول قیمت‌ها پیدا نشد. ساختار سایت ممکن است تغییر کرده باشد."
+        else:
+            return f"⚠️ سایت آهن آنلاین در دسترس نیست (کد وضعیت: {res.status_code})"
+            
     except Exception as e:
-        print(f"Error: {e}")
-    return "⚠️ خطا در دریافت اطلاعات."
+        return f"⚠️ خطای فنی در اتصال به سایت: {str(e)}"
 
 async def main():
     bot = Bot(token=TOKEN)
